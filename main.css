@@ -1,0 +1,38 @@
+body {
+        font-family: Liberation Sans, Arial, sans-serif;
+        background-color: #eef0f1;
+        line-height: 1.5;
+}
+p, sha, code, img {
+	padding: 2rem;
+	font-size: 1.5rem;
+}
+h1, a {
+	color: royalblue;
+}
+a {
+	font-size: 1.5rem;
+}
+sha{
+	font-weight: bolder;
+}
+code{
+	padding: 2rem;
+	margin-left: 3rem;
+	text-align: left;
+	max-width: 93%;
+	word-wrap: break-word;
+	display: inline-block;
+	background-color: #bdbfbf;
+	background-clip: padding-box;
+}
+figure {
+	display: inline-block;
+}
+
+figure img {
+	vertical-align: top;
+}
+figure figcaption {
+	text-align: center;
+}
