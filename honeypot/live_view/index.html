@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!-- Written in vim :) -->
+<html>
+<head>
+<title>Live view</title>
+<link rel="stylesheet" type="text/css" href="https://people.rit.edu/sjf5462/main.css"/>
+</head>
+<script src="//instant.page/5.1.0" type="module" integrity="sha384-by67kQnR+pyfy8yWP4kPO12fHKRLHZPfEsiSXR8u2IKcTdxD805MGUXBzVPnkLHw"></script>
+<body>
+
+<h1><b> Live view </b></h1>
+
+<p>
+This is just a simple python+bash script to view attacker interaction with Cowrie in real time. You can download the files at the end of this page, instead of copying and pasting. The first file (I call it live-view) uses tail to follow appends to cowrie.json, which Cowrie updates in realtime.
+</p>
+
+<code>
+#!/bin/bash</br>
+tail -n 0 -f your/path/to/cowrie.json | ./live-view.py
+</code>
+
+<p>
+The second script decodes the newline deliminated JSON which is sent from tail (I call it live-view.py).
+</p>
+
+<code style='white-space:pre'>
+#!/bin/python3
+
+import json
+import sys
+import signal
+
+#Taken from Blender build script
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+#No annoying output that messes stuff up
+def signal_handler(sig, frame):
+    print()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
+for line in sys.stdin:
+    data = json.loads(line)
+    if "eventid" in data:
+        eventid = data["eventid"]
+        if eventid == "cowrie.client.version" or eventid == "cowrie.client.kex":
+            continue
+        print(bcolors.OKBLUE+data["src_ip"], bcolors.ENDC, eventid, sep="\t", end="\t")
+        if eventid == "cowrie.login.failed":
+            print(bcolors.FAIL, data["username"]+","+data["password"], bcolors.ENDC, sep="\t", end="")
+        elif eventid == "cowrie.login.success":
+            print(bcolors.OKBLUE, data["username"]+","+data["password"], bcolors.ENDC, sep="\t", end="")
+        elif eventid == "cowrie.command.input":
+            print(bcolors.OKGREEN, data["input"], bcolors.ENDC, sep="\t", end="")
+        elif eventid == "cowrie.session.file_download":
+            if "message" in data:
+                print(bcolors.HEADER,data["message"], bcolors.ENDC)
+        elif eventid == "cowrie.session.file_upload":
+            if "message" in data:
+                print(bcolors.HEADER,data["message"], bcolors.ENDC)
+        elif eventid == "cowrie.log.closed":
+            if data["duplicate"]:
+                print(bcolors.HEADER, end="")
+            else:
+                print(bcolors.WARNING, end="")
+            print(str(data["duplicate"])+bcolors.ENDC, end="")
+        print()
+</code>
+
+<p>
+An example of what that looks like.
+</p>
+
+<figure>
+<img src="images/example_live_view.png"></img>
+</figure>
+
+<p>
+(PS, sorry about the messy code, I will probably clean it up at some point)
+</p>
+
+
+</br>
+<div><a href="live-view">live-view</a></div>
+<div><a href="live-view.py">live-view.py</a></div>
+<div><a href="../">../</a></div>
+</body>
+</html>

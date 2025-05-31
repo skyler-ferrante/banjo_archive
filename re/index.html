@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<!-- Written in vim :) -->
+<html>
+<head>
+<title>Dexter</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-K8BF18K9SV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-K8BF18K9SV');
+</script>
+<link rel="stylesheet" type="text/css" href="https://people.rit.edu/sjf5462/main.css"/>
+<style>
+c {
+	color: royalblue;
+}
+img{
+	text-align: center;
+	
+		
+}
+img:hover {
+	-webkit-transform:scale(1.6);
+	transform:scale(1.6);
+}
+</style>
+</head>
+<script src="//instant.page/5.1.0" type="module" integrity="sha384-by67kQnR+pyfy8yWP4kPO12fHKRLHZPfEsiSXR8u2IKcTdxD805MGUXBzVPnkLHw"></script>
+<body>
+
+<h1><b> Dexter Malware </b></h1>
+
+<p>
+For my reverse engineering class (CSEC-202), I had to analyze a sample of malware. I choose Dexter (Win32.Infostealer.Dexter), from <a href="https://github.com/ytisf/theZoo/tree/master/">theZoo</a>. 
+Dexter infects PoS machines and then scrapes the memory of other processes for credit card data.
+</p>
+
+<h1> Basic Static Analysis </h1>
+
+<p>
+There are two files in the zoo for Dexter. One is named win33.exe and the other is named after it’s sha256 hash. Both files are the same size (68096 bytes) and have the same number of strings (1568). However, the files don't have the same sha256 hash. I thought that maybe they were the same binary except they used different addresses for C2. Using diff on the binaries strings shows the only difference is win33.exe contains 151.248.115.107 while the other contains 62.76.44.111.
+</p>
+
+<code>
+5ffd4c5e1766196ac1cbd799de829812757684f4432f1b8de59054890997c30d - named after its hash
+4eabb1adc035f035e010c0d0d259c683e18193f509946652ed8aa7c5d92b6a92 - named win33.exe
+</code>
+
+<p>
+I didn't spend too much time looking at strings, but I did note some interesting things to look for when looking at the assembly/decompile. Searching for ".exe" brings a list of executable names (e.g. chrome.exe), "%s\%s\%s.exe", and ".exe;.bat;.reg;.vbs". 
+</p>
+
+<p>
+Next I searched the files hashes on virus total. This gives us some interesting information. 
+The first file, <a href="https://www.virustotal.com/gui/file/4eabb1adc035f035e010c0d0d259c683e18193f509946652ed8aa7c5d92b6a92">win33.exe</a>, doesn't give much info.
+</p>
+
+<code><pre>
+Filename: javaplugin.exe
+First seen in wild: 2013-06-18 14:38:50 UTC
+</pre></code>
+
+<p>
+The next <a href="https://www.virustotal.com/gui/file/5ffd4c5e1766196ac1cbd799de829812757684f4432f1b8de59054890997c30d/detection">file</a> which was just named after it's hash lists more info.
+</p>
+ 
+<code>
+<pre>
+File name: javaplugin.exe
+Processes Injected: %ProgramFiles(x86)%\internet explorer\iexplore.exe
+IP Traffic: 62.76.44.111:80
+Files Written: %APPDATA%\java security plugin\javaplugin.exe
+Files Deleted: &lt;PATH_SAMPLE.EXE&gt;
+</pre>
+</code>
+
+<p>
+Looking at these files on virus total led me to <a href="https://www.virustotal.com/gui/collection/a2e168ff03cc9f726a6db68aa3e10d9d58e62904fcbae6dd71df04acafe6b30b">this</a> collection. Quoting from the collection: 'Point-of-Sale malware/RAM scraper, "Dexter" Samples observed and collected during 2012 till 2013.'
+</p>
+
+<p>
+Using PEView we can see the malwares imports. We can see it imports <c>HttpSendRequestA</c>, along with other internet/http functions from <c>WININIT.dll</c>. This would seems consistent with virustotal listing communication over port 80. We can also see it imports <c>WriteProcessMemory</c> and <c>ReadProcessMemory</c>, most likely for process injection and memory dumping. Last but not least, there is an icon (ICON 1) listed in the .rsrc section. I used Resource Hacker to extract the file, which looked like a compressed/packed PEFile.
+</p>
+
+<h1> Advanced Static Analysis (Ghidra) </h1>
+
+<p>
+In the beginning of entry, we can see an anti-debug function is used. If the current process is being debugged the malware terminates itself. Hover the image to enlarge (and sorry for the low quality screenshots!).
+</p>
+
+<center>
+<img src="images/anti_debug1.png"></img>
+</center>
+<p>
+The function I named query_current_proccess_anti_debug, loads NTQueryInformationProcess using LoadLibraryA and GetProcessAdress.
+</p>
+
+<center>
+<img src="images/anti_debug2.png"></img>
+</center>
+
+<p>
+NTQueryInformationProcess is called with parameter ProcessInformationClass set to ProcessBasicInformation (0). According to Microsoft documentation, ProcessBasicInformation is used to "Retrieves a pointer to a PEB structure that can be used to determine whether the specified process is being debugged, and ...".
+</p>
+
+<center>
+<img src="images/anti_debug3.png"></img>
+</center>
+
+<p>
+Then after initializing some data, we copy the currently running executable file to "%APPDATA%/Java\ Security\ Plugin/javaplugin" and delete the current file. This was why Virus total listed the file as deleting itself, and was named javaplugin.
+</p>
+
+<center>
+<img src="images/delete_self.png"></img>
+</center>
+
+<p>
+After this, the malware checks if it has debug privileges. If it doesn't it requests them using AdjustTokenPriviledges.
+</p>
+
+<center>
+<img src="images/debug.png"></img>
+</center>
+
+<p>
+The malware also adds .exe, .bat, .reg, and .vbs to the LowRiskFileTypes registry. This will cause windows to not warn the user before running these files.
+</p>
+
+<center>
+<img src="images/low_risk.png"></img>
+</center>
+
+<p>
+The malware also decompresses the resource we found using PEView and writes it to a file called SecureDLL.dll. CreateFileA is called with dwFlagsAndAttributes set to FILE_ATTRIBUTE_HIDDEN (2).
+</p>
+
+<center>
+<img src="images/secure_dll.png"></img>
+</center>
+
+<p>
+Near the end of entry, we see five threads are created. The handles for the first three are stored in global variables. The final two handles are discarded.
+</p>
+
+<center>
+<img src="images/threads.png"></img>
+<p>Entry - Creation of threads</p>
+</center>
+
+<p>
+The first thread is used to dump and scrape the memory of other processes.
+</p>
+
+<center>
+<img src="images/run_and_dump.png"></img>
+</center>
+
+<p>
+It runs a function I named dump_process_memory in a loop. dump_process_memory  runs through all processes and dumps their memory. However, it will not dump processes with certain names. The full list and a screenshot of the function to determine matches is included.
+</p>
+
+
+<center>
+<img src="images/exclude_list.png"></img>
+<img src="images/check_match.png"></img>
+<p>Called in dump_process_memory – If a process name matches one of those strings, that process is skipped</p>
+</center>
+
+<p>
+To dump the memory of other processes it uses the function ReadProcessMemory. It then passes the buffer containing dumped memory to a function I named parse_memory_dump.
+</p>
+
+<center>
+<img src="images/read_parse.png"></img>
+<p>From dump process memory</p>
+</center>
+
+<p>
+parse_memory_dump finds sequences of numbers broken by carets, semicolons, or equal signs. This is consistent with Track 1 (Visa) and Track 2 (MasterCard) credit card data formats. This function was very long with many goto  statements, so I didn't try to fully understand it.
+</p>
+
+<p>
+The second thread sets Run registries. It creates three registry keys to automatically start. It uses a value that was written to a global variable when we copied the exe to %APPDATA% and deleted the original. These allow the malware to establish persistence.
+</p>
+
+<center>
+<img src="images/persistence.png"></img>
+</center>
+
+<p>
+For reference the first numbers in RegOpenKeyExA are referencing:
+</p>
+
+<code>
+<pre>
+#define HKEY_CURRENT_USER	( 0x80000001 )
+#define HKEY_LOCAL_MACHINE	( 0x80000002 )
+#define HKEY_USERS		( 0x80000003 )
+</pre>
+</code>
+
+<p>
+The malware also watches for the registry key values to change using WaitForSingleObject with a Handle registered with RegNotifyChangeKeyValue.
+</p>
+
+<center>
+<img src="images/watch_reg_change.png"></img>
+</center>
+
+<p>
+The next thread starts a new Internet Explorer process and injects into it using VirtualAlloxEx and WriteProcessMemory.
+</p>
+
+<center>
+<img src="images/inject1.png"></img></br>
+<img src="images/inject2.png"></img></br>
+<img src="images/inject3.png"></img></br>
+</center>
+
+<p>
+Another thread uses GetProcessVersion to make sure the injected process still exists. If it doesn’t it starts a new internet explorer process and injects.
+</p>
+
+<center>
+<img src="images/watch_dog_injected.png"></img>
+</center>
+
+<p>
+The final two threads watch for the user logging off.
+</p>
+
+<center>
+<img src="images/log_off1.png"></img>
+<img src="images/log_off2.png"></img>
+<img src="images/log_off3.png"></img>
+<p>The last screenshot is from a function that communicates with a C2 server</p>
+</center>
+
+<p>
+After the application receives a command it waits until the user logs off to receive another message. This might be to make it harder to detect that malware is running on the system.
+</p>
+
+<p>
+After all these processes have been started, a function that communicates with a C2 server is ran. Functions under this function get information about the victim computer such as the Windows Version, architecture, username, and computer name. This information is sent in an HTTP request to "http://151.248.115.107/w19218317418621031041543/gateway.php"/. It looks like the malware includes functionality to connect to different IP addresses by using an array of pointers. However, the array only contains one address (151.248.115.107).
+</p>
+
+<center>
+<img src="images/internet1.png"></img>
+<img src="images/internet2.png"></img>
+</center>
+
+<p>
+Dexter receives commands from a cookie.
+</p>
+
+<center>
+<img src="images/cookie.png"></img>
+</center>
+
+<p>
+The commands the malware can receive are “update-“, “checkin:”, “scanin:”, “uninstall”, and “download-”.
+Unsurprisingly the update command updates the malware. After downloading the payload, it creates and writes to a file taking the form “%APPDATA%/random number/random number.exe”.
+</p>
+
+<center>
+<img src="images/update1.png"></img>
+<img src="images/update2.png"></img>
+<img src="images/update3.png"></img>
+<img src="images/update4.png"></img>
+</center>
+
+<p>
+The “checkin:” command changes the amount of time to sleep after reconnecting. The “scanin:” command changes the amount of time to sleep between dumping/scraping memory. Both default to ten minutes. Uninstall uninstalls (terminates threads, deletes registry keys, deletes the executable file, and exits the process) the malware.
+</p>
+
+<center>
+<img src="images/uninstall.png"></img>
+</center>
+
+<p>
+The last command “download-“ downloads a file and runs it. It downloads the file to the same format as update (“%APPDATA%/random number/random number.exe”). This means the malware can take any action since it can download arbitrary payloads.
+</p>
+
+<center>
+<img src="images/download.png"></img>
+</center>
+
+<h1> Basic Dynamic </h1>
+
+<p>
+Running the malware yields disappointing results. The DLL contained inside the malware is not written, no registries seen during static analysis are written and no network traffic is created from the malware. The process starts and then soon after exits. It seems to either not want to run or be broken (maybe because I'm running on Windows 10?).
+</p>
+
+<h1> Advanced Dynamic (x32_dbg) </h1>
+
+<center>
+<img src="images/x32_dbg1.png"></img>
+</center>
+
+<p>
+First I traced using log text “0x{p:cip} {i:cip}”. This will probably break on the anti-debug function. From the log file the last instruction run was “call 0x00403990”. This looks like the anti-debug function. I patched it so it would immediately return “0xFFFFFFFF” (this is what it returns when not being debugged, as seen from static analysis).
+</p>
+
+<center>
+<img src="images/x32_dbg2.png"></img>
+</center>
+
+<p>
+After patching, tracing did not work. The debugger would just stall with nothing written to the log. Running the program without breakpoints caused freezing and a black screen. Manually going through the program, I found that the memory dumping function was the issue. I turned the memory dumping functions call into a NOP and restarted.
+</p>
+
+<center>
+<img src="images/x32_dbg3.png"></img>
+</center>
+
+<p>
+After that the malware sort of worked. The VM had some random freezes, random black screens, but I got it to write Secure.dll, and write itself to %APPDATA%. But it did not delete itself or create network traffic. Regshot (along with most other programs) seemed to not want to run after the malware ran. Checking registry keys manually showed no set keys. There seemed to be more issues when I was typing leading me to believe there is some sort of keylogger as well.
+</p>
+
+<center>
+<img src="images/java_security_plugin1.png"></img>
+<img src="images/java_security_plugin2.png"></img></br>
+<img src="images/x32_dbg1.png"></img>
+<img src="images/x32_dbg2.png"></img>
+<img src="images/x32_dbg3.png"></img></br>
+<img src="images/secure_dll_file.png"></img></br>
+</center>
+
+<p>
+A quick look at SecureDLL.dll in Ghidra leads me to believe that it is a keylogger.
+</p>
+
+<center>
+<img src="images/key_log1.png"></img>
+<img src="images/key_log2.png"></img>
+<img src="images/key_log3.png"></img>
+</center>
+
+<h1>Works cited</h1>
+
+<cite>
+<a href="https://admx.help/?Category=Windows_10_2016&amp;Policy=Microsoft.Policies.AttachmentManager::AM_SetLowRiskInclusion">ADMX - Inclusion list for low risk file types</a></br>
+<a href="https://neapay.com/online-tools/card-track1-track2-generator.html">Credit - Debit cards Track1 - Track2 generator</a></br>
+<a href="https://wiki.winehq.org/List_Of_Windows_Messages">List of Windows Messages</a></br>
+<a href="https://docs.microsoft.com/en-us/windows/win32/api/">Win32-API</a></br>
+<a href="https://tarma.com/support/im9/using/symbols/functions/csidls.htm">CSIDL Values</a></br>
+<a href="https://thezoo.morirt.com/">theZoo</a></br>
+</cite>
+<div><a href="../">../</a></div>
+</br>
+
+</body>
+</html>

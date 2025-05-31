@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- Written in vim :) -->
+<html>
+<head>
+<title>Honeypot</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-K8BF18K9SV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-K8BF18K9SV');
+</script>
+<link rel="stylesheet" type="text/css" href="https://people.rit.edu/sjf5462/main.css"/>
+</head>
+<script src="//instant.page/5.1.0" type="module" integrity="sha384-by67kQnR+pyfy8yWP4kPO12fHKRLHZPfEsiSXR8u2IKcTdxD805MGUXBzVPnkLHw"></script>
+<body>
+
+<h1><b> Honeypot </b></h1>
+
+<p>
+I run a <a href='https://github.com/cowrie/cowrie/'>Cowrie</a> honeypot from a digital ocean droplet. I have written about some of the malware I have found downloaded to it, and botnets I have observed. I also have a CSV file that autoupdates, showing daily login attempts. I use python to parse Cowries output into SQLite. To generate the graphs, I use matplotlib.
+</p>
+
+<h1> Graphs Last Updated 8/11/2021 (Created using Matplotlib)</h1>
+
+<figure>
+<img src="images/Most_Used_Usernames.png"></img>
+<figcaption> Most Used Usernames (Last Updated 8/11/2021)</figcaption>
+</figure>
+
+<figure>
+<img src="images/Most_Used_Passwords.png"></img>
+<figcaption> Most Used Passwords (Last Updated 8/11/2021)</figcaption>
+</figure>
+
+<figure>
+<img src="images/Amount_Of_Attempts_VS_Day.png"></img>
+<figcaption> Graph of SSH Attempts vs Number of Day running </figcaption>
+</figure>
+
+<figure>
+<img src="images/Attempts_VS_Hour.png"></img>
+<figcaption> Graph of SSH Attempts vs Hour Running </figcaption>
+<figcaption> I find it interesting that attacker activity is basically the same amount throughout the day.</figcaption>
+</figure>
+
+<figure>
+<img src="images/box_plot_attempts_by_ip.png"></img>
+<figcaption> Boxplot of Number of Attempts by IP </figcaption>
+<figcaption> There are many IP addresses with thousands of attempts, but most have only a few. </figcaption>
+</figure>
+
+</br>
+</br>
+</br>
+</br>
+<!--
+<div><a href="usernames_and_passwords.txt">Usernames and Passwords CSV (captured daily)</a></div>
+-->
+<div><a href="passwords.txt">The 1,000 most commonly attempted passwords</a></div>
+<div><a href="live_view">Live view (visualize in real time)</a></div>
+<div><a href="location_data">Location data</a></div>
+</br>
+<div><a href="tigan.cf/">Tigan.cf</a></div>
+<div><a href="shellbot">Shellbot</a></div>
+<div><a href="xmr_rigs">XMR_Rigs</a></div>
+<div><a href="perl_irc_bot">Perl IRC Bot</a></div>
+<div><a href="../">../</a></div>
+</body>
+</html>

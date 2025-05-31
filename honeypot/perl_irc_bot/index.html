@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!-- Written in vim :) -->
+<html>
+<head>
+<title>Perl IRC Worm</title>
+<link rel="stylesheet" type="text/css" href="https://people.rit.edu/sjf5462/main.css"/>
+</head>
+<script src="//instant.page/5.1.0" type="module" integrity="sha384-by67kQnR+pyfy8yWP4kPO12fHKRLHZPfEsiSXR8u2IKcTdxD805MGUXBzVPnkLHw"></script>
+<body>
+
+<h1><b> Perl IRC Worm </b></h1>
+
+<p>This one is a IRC Perl Worm, which according to it's header, was written in 2012 for “educational purposes only” by the “w0rmer security team”.
+   It’s funny that something so old can still be seen making it's way around the internet. I saw it a few months after it attacked, and the IRC C2 was already
+   taken down. Taking a quick look at the header and the source, it is mostly for DDoS, but has a few other features (email, portscan, run commands, ...).
+   It is not a direct feature for it to bruteforce SSH credentials, but it is possible that after a host joins on IRC, it is directed to download an additional
+   payload for SSH scanning and bruteforcing.
+</p>
+
+<figure>
+    <img src="images/perl_header.png"></img>
+</figure>
+
+</br>
+<div><a href="https://www.virustotal.com/gui/file/7916796b87e0e9c858bccc0e2a6936d5b99f35c538817344e0008b9a3f84ac2c">VirusTotal</a></div>
+<div><a href="login_attempts.txt">Login Attempts (From one IP)</a></div>
+<div><a href="downloads.txt">Download logs</a></div>
+<div><a href="../">../</a></div>
+</body>
+</html>
