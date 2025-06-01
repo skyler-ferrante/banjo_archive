@@ -18,9 +18,9 @@ In `pwnkit`, `pkexec` assumed that `argc` would be at least 1, which led to `arg
 
 This was particularly bad for two reasons. The first is that `argv[argc+1]` is typically a pointer to `envp` in most Linux systems. The second is that `pwnkit` had argv rewriting code that ran after environment variable filtering code ran, resulting in code execution.
 
-## Attempting to find sister bugs
+## Searching for similar vulnerabilities
 
-To generate a list of potentially vulnerable targets, I ran every setuid program on my system with `argv[0]` pointing to `NULL`. I used the `find` command along with `xargs` to run the simple program below:
+To generate a list of potentially vulnerable targets, I ran every setuid program on my system with `argv[0]` pointing to `NULL` with the simple program below:
 
 ```c
 #include <stdlib.h>
