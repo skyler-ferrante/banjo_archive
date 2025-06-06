@@ -1,4 +1,4 @@
-# `argc == 0`: Finding a (small) Bug in `su`
+# `argc == 0`: Finding bugs in shadow-utils and util-linux
 
 Command-line arguments and environment variables are forms of user input. Like any user input, they can be exploited by attackers. An attacker can manipulate `argc`, `argv`, and `envp` when considering local privilege escalation (LPE) attacks.
 
@@ -39,7 +39,7 @@ int main(int argc, char** argv_real) {
 }
 ```
 
-I discovered that when `argc == 0`, a few binaries inside of `shadow-utils` (`su`, `chsh`, etc.) can be forced to segfault since they were calling `basename` on `argv[0]` without checking if `argv[0]` is `NULL`. I reported the [issue](https://github.com/shadow-maint/shadow/issues/456) and wrote a quick [patch](https://github.com/shadow-maint/shadow/commit/9f3a1c2).
+I discovered that when `argc == 0`, a few binaries inside of `shadow-utils` (`su`, `chsh`, etc.) can be forced to segfault since they were calling `basename` on `argv[0]` without checking if `argv[0]` is `NULL`. I reported the [issue](https://github.com/shadow-maint/shadow/issues/680) and wrote a quick [patch](https://github.com/shadow-maint/shadow/commit/c089196e15dcafc186474469c4914638da233b31).
 
 Unlike in the `pkexec` case, it seems we don't have a way to exploit this bug. We can force a null dereference in a setuid program, but we can't gain any permissions or abilities.
 
@@ -77,12 +77,12 @@ Many thanks to the shadow-utils and util-linux teams for their prompt responses 
 **Commits:**
 * [Fix null dereference in basename](https://github.com/shadow-maint/shadow/commit/c089196e15dcafc186474469c4914638da233b31)
 * [su.c commit to disallow logging arbitrary strings](https://git.kernel.org/pub/scm/utils/util-linux/util-linux.git/commit/?id=677a3168b261f3289e282a02dfd85d7f37de0447)
-* [Kernel commit to disallow `argc == 0`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=1f6e5e2c)
+* [Kernel commit to disallow `argc == 0`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dcd46d897adb70d63e025f175a00a89797d31a43)
 
 **References:**
 
-* [Qualys PwnKit](https://blog.qualys.com/vulnerabilities-research/2022/01/25/cve-2021-4034-pkexec-local-privilege-escalation-vulnerability)
+* [Qualys PwnKit](https://blog.qualys.com/vulnerabilities-threat-research/2022/01/25/pwnkit-local-privilege-escalation-vulnerability-discovered-in-polkits-pkexec-cve-2021-4034)
 * [My GitHub issue in shadow-utils](https://github.com/shadow-maint/shadow/issues/680)
-* [LWN Article](https://lwn.net/Articles/882226/)
+* [LWN Article](https://lwn.net/Articles/882799/)
 * [Terminal Command Injection 2003](https://seclists.org/fulldisclosure/2003/Feb/att-341/Termulation.txt)
 * [Terminal Command Injection 2024](https://packetstorm.news/files/id/177031)
