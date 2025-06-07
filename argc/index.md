@@ -8,9 +8,9 @@ int main(int argc, char *argv[], char *envp[]);
 
 ## pwnkit
 
-On newer kernels ([linux-5.18+](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=1f6e5e2c)), Linux will not allow userspace programs to be called with `argc == 0` (it will silently fix this). However, on older Linux kernels, `argv[0]` can be `NULL`.
+On newer kernels ([linux-5.18+](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dcd46d897adb70d63e025f175a00a89797d31a43)), Linux will not allow userspace programs to be called with `argc == 0` (it will silently fix this). However, on older Linux kernels, `argv[0]` can be `NULL`.
 
-The reason this was changed was due to [PwnKit](https://blog.qualys.com/vulnerabilities-research/2022/01/25/cve-2021-4034-pkexec-local-privilege-escalation-vulnerability), a vulnerability in `pkexec`.
+The reason this was changed was due to [PwnKit](https://blog.qualys.com/vulnerabilities-threat-research/2022/01/25/pwnkit-local-privilege-escalation-vulnerability-discovered-in-polkits-pkexec-cve-2021-4034), a vulnerability in `pkexec`.
 
 This was surprising to me, since `argv[0]` is usually defined as the running binary name. Almost all programs rely on `argv[0]` in usage messages/error messages.
 
