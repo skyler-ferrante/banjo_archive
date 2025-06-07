@@ -1,4 +1,4 @@
-# `argc == 0`: Finding bugs in shadow-utils and util-linux
+# `argv[0]`: Finding bugs in shadow-utils and util-linux
 
 Command-line arguments and environment variables are forms of user input. Like any user input, they can be exploited by attackers. An attacker can manipulate `argc`, `argv`, and `envp` when considering local privilege escalation (LPE) attacks.
 
